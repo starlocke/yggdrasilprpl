@@ -71,9 +71,9 @@
 #define NULLPRPL_ID "prpl-yggdrasil"
 static PurplePlugin *_yggdrasil_protocol = NULL;
 
-#define NULL_STATUS_ONLINE   "online"
-#define NULL_STATUS_AWAY     "away"
-#define NULL_STATUS_OFFLINE  "offline"
+#define YGGDRASIL_STATUS_ONLINE   "online"
+#define YGGDRASIL_STATUS_AWAY     "away"
+#define YGGDRASIL_STATUS_OFFLINE  "offline"
 #define PLUGIN_DEBUG_NAME    "yggdrasilprpl"
 
 typedef void (*GcFunc)(PurpleConnection *from,
@@ -169,9 +169,9 @@ static void discover_status(PurpleConnection *from, PurpleConnection *to,
     const char *status_id = purple_status_get_id(status);
     const char *message = purple_status_get_attr_string(status, "message");
 
-    if (!strcmp(status_id, NULL_STATUS_ONLINE) ||
-        !strcmp(status_id, NULL_STATUS_AWAY) ||
-        !strcmp(status_id, NULL_STATUS_OFFLINE)) {
+    if (!strcmp(status_id, YGGDRASIL_STATUS_ONLINE) ||
+        !strcmp(status_id, YGGDRASIL_STATUS_AWAY) ||
+        !strcmp(status_id, YGGDRASIL_STATUS_OFFLINE)) {
       purple_debug_info(PLUGIN_DEBUG_NAME, "%s sees that %s is %s: %s\n",
                         from_username, to_username, status_id, message);
       purple_prpl_got_user_status(from->account, to_username, status_id,
@@ -285,22 +285,22 @@ static GList *yggdrasilprpl_status_types(PurpleAccount *acct)
 
   purple_debug_info(PLUGIN_DEBUG_NAME, "returning status types for %s: %s, %s, %s\n",
                     acct->username,
-                    NULL_STATUS_ONLINE, NULL_STATUS_AWAY, NULL_STATUS_OFFLINE);
+                    YGGDRASIL_STATUS_ONLINE, YGGDRASIL_STATUS_AWAY, YGGDRASIL_STATUS_OFFLINE);
 
   type = purple_status_type_new_with_attrs(PURPLE_STATUS_AVAILABLE,
-      NULL_STATUS_ONLINE, NULL, TRUE, TRUE, FALSE,
+      YGGDRASIL_STATUS_ONLINE, NULL, TRUE, TRUE, FALSE,
       "message", _("Message"), purple_value_new(PURPLE_TYPE_STRING),
       NULL);
   types = g_list_prepend(types, type);
 
   type = purple_status_type_new_with_attrs(PURPLE_STATUS_AWAY,
-      NULL_STATUS_AWAY, NULL, TRUE, TRUE, FALSE,
+      YGGDRASIL_STATUS_AWAY, NULL, TRUE, TRUE, FALSE,
       "message", _("Message"), purple_value_new(PURPLE_TYPE_STRING),
       NULL);
   types = g_list_prepend(types, type);
 
   type = purple_status_type_new_with_attrs(PURPLE_STATUS_OFFLINE,
-      NULL_STATUS_OFFLINE, NULL, TRUE, TRUE, FALSE,
+      YGGDRASIL_STATUS_OFFLINE, NULL, TRUE, TRUE, FALSE,
       "message", _("Message"), purple_value_new(PURPLE_TYPE_STRING),
       NULL);
   types = g_list_prepend(types, type);
