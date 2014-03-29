@@ -68,7 +68,7 @@
 #include "version.h"
 
 
-#define NULLPRPL_ID "prpl-yggdrasil"
+#define YGGDRASILPRPL_ID "prpl-yggdrasil"
 static PurplePlugin *_yggdrasil_protocol = NULL;
 
 #define YGGDRASIL_STATUS_ONLINE   "online"
@@ -103,7 +103,7 @@ typedef struct {
  * helpers
  */
 static PurpleConnection *get_yggdrasilprpl_gc(const char *username) {
-  PurpleAccount *acct = purple_accounts_find(username, NULLPRPL_ID);
+  PurpleAccount *acct = purple_accounts_find(username, YGGDRASILPRPL_ID);
   if (acct && purple_account_is_connected(acct))
     return acct->gc;
   else
@@ -114,7 +114,7 @@ static void call_if_yggdrasilprpl(gpointer data, gpointer userdata) {
   PurpleConnection *gc = (PurpleConnection *)(data);
   GcFuncData *gcfdata = (GcFuncData *)userdata;
 
-  if (!strcmp(gc->account->protocol_id, NULLPRPL_ID))
+  if (!strcmp(gc->account->protocol_id, YGGDRASILPRPL_ID))
     gcfdata->fn(gcfdata->from, gc, gcfdata->userdata);
 }
 
@@ -413,7 +413,7 @@ static int yggdrasilprpl_send_im(PurpleConnection *gc, const char *who,
   const char *from_username = gc->account->username;
   PurpleMessageFlags receive_flags = ((flags & ~PURPLE_MESSAGE_SEND)
                                       | PURPLE_MESSAGE_RECV);
-  PurpleAccount *to_acct = purple_accounts_find(who, NULLPRPL_ID);
+  PurpleAccount *to_acct = purple_accounts_find(who, YGGDRASILPRPL_ID);
   PurpleConnection *to;
 
   purple_debug_info(PLUGIN_DEBUG_NAME, "sending message from %s to %s: %s\n",
@@ -506,7 +506,7 @@ static void yggdrasilprpl_get_info(PurpleConnection *gc, const char *username) {
     g_free(msg);
   }
 
-  acct = purple_accounts_find(username, NULLPRPL_ID);
+  acct = purple_accounts_find(username, YGGDRASILPRPL_ID);
   if (acct)
     body = purple_account_get_user_info(acct);
   else
@@ -717,7 +717,7 @@ static void yggdrasilprpl_chat_invite(PurpleConnection *gc, int id,
   const char *username = gc->account->username;
   PurpleConversation *conv = purple_find_chat(gc, id);
   const char *room = conv->name;
-  PurpleAccount *to_acct = purple_accounts_find(who, NULLPRPL_ID);
+  PurpleAccount *to_acct = purple_accounts_find(who, YGGDRASILPRPL_ID);
 
   purple_debug_info(PLUGIN_DEBUG_NAME, "%s is inviting %s to join chat room %s\n",
                     username, who, room);
@@ -1179,7 +1179,7 @@ static PurplePluginInfo info =
   0,                                                       /* flags */
   NULL,                                                    /* dependencies */
   PURPLE_PRIORITY_DEFAULT,                                 /* priority */
-  NULLPRPL_ID,                                             /* id */
+  YGGDRASILPRPL_ID,                                             /* id */
   "Null - Testing Plugin",                                 /* name */
   DISPLAY_VERSION,                                         /* version */
   N_("Null Protocol Plugin"),                              /* summary */
