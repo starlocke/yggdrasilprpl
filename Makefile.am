@@ -4,17 +4,17 @@ EXTRA_DIST = \
 
 pkgdir = $(libdir)/purple-$(PURPLE_MAJOR_VERSION)
 
-NULLSOURCES = nullprpl.c
+YGGDRASILSOURCES = yggdrasilprpl.c
 
 AM_CFLAGS = $(st)
 
-libnull_la_LDFLAGS = -module -avoid-version
+libyggdrasil_la_LDFLAGS = -module -avoid-version
 
-# nullprpl isn't built by default. when it is built, it's dynamically linked.
+# yggdrasilprpl isn't built by default. when it is built, it's dynamically linked.
 st =
-pkg_LTLIBRARIES    = libnull.la
-libnull_la_SOURCES = $(NULLSOURCES)
-libnull_la_LIBADD  = $(GLIB_LIBS)
+pkg_LTLIBRARIES    = libyggdrasil.la
+libyggdrasil_la_SOURCES = $(YGGDRASILSOURCES)
+libyggdrasil_la_LIBADD  = $(GLIB_LIBS)
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/libpurple \

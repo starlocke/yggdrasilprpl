@@ -51,7 +51,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-subdir = libpurple/protocols/null
+subdir = libpurple/protocols/yggdrasil
 DIST_COMMON = README $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/acinclude.m4 \
@@ -92,16 +92,16 @@ am__uninstall_files_from_dir = { \
 am__installdirs = "$(DESTDIR)$(pkgdir)"
 LTLIBRARIES = $(pkg_LTLIBRARIES)
 am__DEPENDENCIES_1 =
-libnull_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
-am__objects_1 = nullprpl.lo
-am_libnull_la_OBJECTS = $(am__objects_1)
-libnull_la_OBJECTS = $(am_libnull_la_OBJECTS)
+libyggdrasil_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
+am__objects_1 = yggdrasilprpl.lo
+am_libyggdrasil_la_OBJECTS = $(am__objects_1)
+libyggdrasil_la_OBJECTS = $(am_libyggdrasil_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
-libnull_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+libyggdrasil_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
-	$(libnull_la_LDFLAGS) $(LDFLAGS) -o $@
+	$(libyggdrasil_la_LDFLAGS) $(LDFLAGS) -o $@
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -128,8 +128,8 @@ am__v_CCLD_0 = @echo "  CCLD  " $@;
 AM_V_GEN = $(am__v_GEN_@AM_V@)
 am__v_GEN_ = $(am__v_GEN_@AM_DEFAULT_V@)
 am__v_GEN_0 = @echo "  GEN   " $@;
-SOURCES = $(libnull_la_SOURCES)
-DIST_SOURCES = $(libnull_la_SOURCES)
+SOURCES = $(libyggdrasil_la_SOURCES)
+DIST_SOURCES = $(libyggdrasil_la_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -396,15 +396,15 @@ EXTRA_DIST = \
 	README
 
 pkgdir = $(libdir)/purple-$(PURPLE_MAJOR_VERSION)
-NULLSOURCES = nullprpl.c
+YGGDRASILSOURCES = yggdrasilprpl.c
 AM_CFLAGS = $(st)
-libnull_la_LDFLAGS = -module -avoid-version
+libyggdrasil_la_LDFLAGS = -module -avoid-version
 
-# nullprpl isn't built by default. when it is built, it's dynamically linked.
+# yggdrasilprpl isn't built by default. when it is built, it's dynamically linked.
 st = 
-pkg_LTLIBRARIES = libnull.la
-libnull_la_SOURCES = $(NULLSOURCES)
-libnull_la_LIBADD = $(GLIB_LIBS)
+pkg_LTLIBRARIES = libyggdrasil.la
+libyggdrasil_la_SOURCES = $(YGGDRASILSOURCES)
+libyggdrasil_la_LIBADD = $(GLIB_LIBS)
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/libpurple \
 	-I$(top_builddir)/libpurple \
@@ -424,9 +424,9 @@ $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu libpurple/protocols/null/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --gnu libpurple/protocols/yggdrasil/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --gnu libpurple/protocols/null/Makefile
+	  $(AUTOMAKE) --gnu libpurple/protocols/yggdrasil/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
@@ -477,8 +477,8 @@ clean-pkgLTLIBRARIES:
 	  echo "rm -f \"$${dir}/so_locations\""; \
 	  rm -f "$${dir}/so_locations"; \
 	done
-libnull.la: $(libnull_la_OBJECTS) $(libnull_la_DEPENDENCIES) $(EXTRA_libnull_la_DEPENDENCIES) 
-	$(AM_V_CCLD)$(libnull_la_LINK) -rpath $(pkgdir) $(libnull_la_OBJECTS) $(libnull_la_LIBADD) $(LIBS)
+libyggdrasil.la: $(libyggdrasil_la_OBJECTS) $(libyggdrasil_la_DEPENDENCIES) $(EXTRA_libyggdrasil_la_DEPENDENCIES) 
+	$(AM_V_CCLD)$(libyggdrasil_la_LINK) -rpath $(pkgdir) $(libyggdrasil_la_OBJECTS) $(libyggdrasil_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -486,7 +486,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/nullprpl.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/yggdrasilprpl.Plo@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<

@@ -1,13 +1,13 @@
 #
 # Makefile.mingw
 #
-# Description: Makefile for win32 (mingw) version of libnull
+# Description: Makefile for win32 (mingw) version of libyggdrasil
 #
 
 PIDGIN_TREE_TOP := ../../..
 include $(PIDGIN_TREE_TOP)/libpurple/win32/global.mak
 
-TARGET = libnull
+TARGET = libyggdrasil
 TYPE = PLUGIN
 
 # Static or Plugin...
@@ -37,7 +37,7 @@ LIB_PATHS +=		-L$(GTK_TOP)/lib \
 ##
 ##  SOURCES, OBJECTS
 ##
-C_SRC =	nullprpl.c
+C_SRC =	yggdrasilprpl.c
 
 OBJECTS = $(C_SRC:%.c=%.o)
 
