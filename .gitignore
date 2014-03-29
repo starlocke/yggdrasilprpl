@@ -5,3 +5,7 @@ Makefile
 .deps
 .libs
 
+# Compiled files
+libyggdrasil.la
+yggdrasilprpl.lo
+
