@@ -5,7 +5,7 @@
  * to list here.  Please refer to the COPYRIGHT file distributed with this
  * source distribution.
  *
- * Nullprpl is a mock protocol plugin for Pidgin and libpurple. You can create
+ * Yggdrasilprpl is a mock protocol plugin for Pidgin and libpurple. You can create
  * accounts with it, sign on and off, add buddies, and send and receive IMs,
  * all without connecting to a server!
  *
@@ -15,12 +15,12 @@
  * icons and emblems. Notable missing features are file transfer and account
  * registration and authentication.
  *
- * Nullprpl is intended as an example of how to write a libpurple protocol
+ * Yggdrasilprpl is intended as an example of how to write a libpurple protocol
  * plugin. It doesn't contain networking code or an event loop, but it does
  * demonstrate how to use the libpurple API to do pretty much everything a prpl
  * might need to do.
  *
- * Nullprpl is also a useful tool for hacking on Pidgin, Finch, and other
+ * Yggdrasilprpl is also a useful tool for hacking on Pidgin, Finch, and other
  * libpurple clients. It's a full-featured protocol plugin, but doesn't depend
  * on an external server, so it's a quick and easy way to exercise test new
  * code. It also allows you to work while you're disconnected.
@@ -323,7 +323,7 @@ static GList *yggdrasilprpl_blist_node_menu(PurpleBlistNode *node) {
 
   if (PURPLE_BLIST_NODE_IS_BUDDY(node)) {
     PurpleMenuAction *action = purple_menu_action_new(
-      _("Nullprpl example menu item"),
+      _("Yggdrasilprpl example menu item"),
       PURPLE_CALLBACK(blist_example_menu_item),
       NULL,   /* userdata passed to the callback */
       NULL);  /* child menu items */
