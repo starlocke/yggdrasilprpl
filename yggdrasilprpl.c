@@ -1180,12 +1180,12 @@ static PurplePluginInfo info =
   NULL,                                                    /* dependencies */
   PURPLE_PRIORITY_DEFAULT,                                 /* priority */
   YGGDRASILPRPL_ID,                                             /* id */
-  "Null - Testing Plugin",                                 /* name */
+  "yggdrasilprpl - Yggdrasil Radio Chat Protocol Plugin",  /* name */
   DISPLAY_VERSION,                                         /* version */
-  N_("Null Protocol Plugin"),                              /* summary */
-  N_("Null Protocol Plugin"),                              /* description */
-  NULL,                                                    /* author */
-  PURPLE_WEBSITE,                                          /* homepage */
+  N_("Yggdrasil Radio Chat"),                              /* summary */
+  N_("Yggdrasil Radio Chat"),                              /* description */
+  "Victor Yap <victor.yap@alumni.concordia.ca>",           /* author */
+  "http://www.cul-de-sac.ca/",                             /* homepage */
   NULL,                                                    /* load */
   NULL,                                                    /* unload */
   yggdrasilprpl_destroy,                                        /* destroy */
