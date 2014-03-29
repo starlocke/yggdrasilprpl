@@ -74,6 +74,7 @@ static PurplePlugin *_yggdrasil_protocol = NULL;
 #define NULL_STATUS_ONLINE   "online"
 #define NULL_STATUS_AWAY     "away"
 #define NULL_STATUS_OFFLINE  "offline"
+#define PLUGIN_DEBUG_NAME    "yggdrasilprpl"
 
 typedef void (*GcFunc)(PurpleConnection *from,
                        PurpleConnection *to,
@@ -171,12 +172,12 @@ static void discover_status(PurpleConnection *from, PurpleConnection *to,
     if (!strcmp(status_id, NULL_STATUS_ONLINE) ||
         !strcmp(status_id, NULL_STATUS_AWAY) ||
         !strcmp(status_id, NULL_STATUS_OFFLINE)) {
-      purple_debug_info("yggdrasilprpl", "%s sees that %s is %s: %s\n",
+      purple_debug_info(PLUGIN_DEBUG_NAME, "%s sees that %s is %s: %s\n",
                         from_username, to_username, status_id, message);
       purple_prpl_got_user_status(from->account, to_username, status_id,
                                   (message) ? "message" : NULL, message, NULL);
     } else {
-      purple_debug_error("yggdrasilprpl",
+      purple_debug_error(PLUGIN_DEBUG_NAME,
                          "%s's buddy %s has an unknown status: %s, %s",
                          from_username, to_username, status_id, message);
     }
@@ -185,7 +186,7 @@ static void discover_status(PurpleConnection *from, PurpleConnection *to,
 
 static void report_status_change(PurpleConnection *from, PurpleConnection *to,
                                  gpointer userdata) {
-  purple_debug_info("yggdrasilprpl", "notifying %s that %s changed status\n",
+  purple_debug_info(PLUGIN_DEBUG_NAME, "notifying %s that %s changed status\n",
                     to->account->username, from->account->username);
   discover_status(to, from, NULL);
 }
@@ -198,7 +199,7 @@ static void yggdrasilprpl_input_user_info(PurplePluginAction *action)
 {
   PurpleConnection *gc = (PurpleConnection *)action->context;
   PurpleAccount *acct = purple_connection_get_account(gc);
-  purple_debug_info("yggdrasilprpl", "showing 'Set User Info' dialog for %s\n",
+  purple_debug_info(PLUGIN_DEBUG_NAME, "showing 'Set User Info' dialog for %s\n",
                     acct->username);
 
   purple_account_request_change_user_info(acct);
@@ -224,7 +225,7 @@ static const char *yggdrasilprpl_list_icon(PurpleAccount *acct, PurpleBuddy *bud
 }
 
 static char *yggdrasilprpl_status_text(PurpleBuddy *buddy) {
-  purple_debug_info("yggdrasilprpl", "getting %s's status text for %s\n",
+  purple_debug_info(PLUGIN_DEBUG_NAME, "getting %s's status text for %s\n",
                     buddy->name, buddy->account->username);
 
   if (purple_find_buddy(buddy->account, buddy->name)) {
@@ -239,11 +240,11 @@ static char *yggdrasilprpl_status_text(PurpleBuddy *buddy) {
     else
       text = g_strdup(name);
 
-    purple_debug_info("yggdrasilprpl", "%s's status text is %s\n", buddy->name, text);
+    purple_debug_info(PLUGIN_DEBUG_NAME, "%s's status text is %s\n", buddy->name, text);
     return text;
 
   } else {
-    purple_debug_info("yggdrasilprpl", "...but %s is not logged in\n", buddy->name);
+    purple_debug_info(PLUGIN_DEBUG_NAME, "...but %s is not logged in\n", buddy->name);
     return g_strdup("Not logged in");
   }
 }
@@ -273,7 +274,7 @@ static void yggdrasilprpl_tooltip_text(PurpleBuddy *buddy,
     purple_notify_user_info_add_pair(info, _("User info"), _("not logged in"));
   }
 
-  purple_debug_info("yggdrasilprpl", "showing %s tooltip for %s\n",
+  purple_debug_info(PLUGIN_DEBUG_NAME, "showing %s tooltip for %s\n",
                     (full) ? "full" : "short", buddy->name);
 }
 
@@ -282,7 +283,7 @@ static GList *yggdrasilprpl_status_types(PurpleAccount *acct)
   GList *types = NULL;
   PurpleStatusType *type;
 
-  purple_debug_info("yggdrasilprpl", "returning status types for %s: %s, %s, %s\n",
+  purple_debug_info(PLUGIN_DEBUG_NAME, "returning status types for %s: %s, %s, %s\n",
                     acct->username,
                     NULL_STATUS_ONLINE, NULL_STATUS_AWAY, NULL_STATUS_OFFLINE);
 
@@ -308,7 +309,7 @@ static GList *yggdrasilprpl_status_types(PurpleAccount *acct)
 }
 
 static void blist_example_menu_item(PurpleBlistNode *node, gpointer userdata) {
-  purple_debug_info("yggdrasilprpl", "example menu item clicked on user %s\n",
+  purple_debug_info(PLUGIN_DEBUG_NAME, "example menu item clicked on user %s\n",
                     ((PurpleBuddy *)node)->name);
 
   purple_notify_info(NULL,  /* plugin handle or PurpleConnection */
@@ -318,7 +319,7 @@ static void blist_example_menu_item(PurpleBlistNode *node, gpointer userdata) {
 }
 
 static GList *yggdrasilprpl_blist_node_menu(PurpleBlistNode *node) {
-  purple_debug_info("yggdrasilprpl", "providing buddy list context menu item\n");
+  purple_debug_info(PLUGIN_DEBUG_NAME, "providing buddy list context menu item\n");
 
   if (PURPLE_BLIST_NODE_IS_BUDDY(node)) {
     PurpleMenuAction *action = purple_menu_action_new(
@@ -335,7 +336,7 @@ static GList *yggdrasilprpl_blist_node_menu(PurpleBlistNode *node) {
 static GList *yggdrasilprpl_chat_info(PurpleConnection *gc) {
   struct proto_chat_entry *pce; /* defined in prpl.h */
 
-  purple_debug_info("yggdrasilprpl", "returning chat setting 'room'\n");
+  purple_debug_info(PLUGIN_DEBUG_NAME, "returning chat setting 'room'\n");
 
   pce = g_new0(struct proto_chat_entry, 1);
   pce->label = _("Chat _room");
@@ -349,7 +350,7 @@ static GHashTable *yggdrasilprpl_chat_info_defaults(PurpleConnection *gc,
                                                const char *room) {
   GHashTable *defaults;
 
-  purple_debug_info("yggdrasilprpl", "returning chat default setting "
+  purple_debug_info(PLUGIN_DEBUG_NAME, "returning chat default setting "
                     "'room' = 'default'\n");
 
   defaults = g_hash_table_new_full(g_str_hash, g_str_equal, NULL, g_free);
@@ -362,7 +363,7 @@ static void yggdrasilprpl_login(PurpleAccount *acct)
   PurpleConnection *gc = purple_account_get_connection(acct);
   GList *offline_messages;
 
-  purple_debug_info("yggdrasilprpl", "logging in %s\n", acct->username);
+  purple_debug_info(PLUGIN_DEBUG_NAME, "logging in %s\n", acct->username);
 
   purple_connection_update_progress(gc, _("Connecting"),
                                     0,   /* which connection step this is */
@@ -380,12 +381,12 @@ static void yggdrasilprpl_login(PurpleAccount *acct)
   foreach_yggdrasilprpl_gc(report_status_change, gc, NULL);
 
   /* fetch stored offline messages */
-  purple_debug_info("yggdrasilprpl", "checking for offline messages for %s\n",
+  purple_debug_info(PLUGIN_DEBUG_NAME, "checking for offline messages for %s\n",
                     acct->username);
   offline_messages = g_hash_table_lookup(goffline_messages, acct->username);
   while (offline_messages) {
     GOfflineMessage *message = (GOfflineMessage *)offline_messages->data;
-    purple_debug_info("yggdrasilprpl", "delivering offline message to %s: %s\n",
+    purple_debug_info(PLUGIN_DEBUG_NAME, "delivering offline message to %s: %s\n",
                       acct->username, message->message);
     serv_got_im(gc, message->from, message->message, message->flags,
                 message->mtime);
@@ -415,14 +416,14 @@ static int yggdrasilprpl_send_im(PurpleConnection *gc, const char *who,
   PurpleAccount *to_acct = purple_accounts_find(who, NULLPRPL_ID);
   PurpleConnection *to;
 
-  purple_debug_info("yggdrasilprpl", "sending message from %s to %s: %s\n",
+  purple_debug_info(PLUGIN_DEBUG_NAME, "sending message from %s to %s: %s\n",
                     from_username, who, message);
 
   /* is the sender blocked by the recipient's privacy settings? */
   if (to_acct && !purple_privacy_check(to_acct, gc->account->username)) {
     char *msg = g_strdup_printf(
       _("Your message was blocked by %s's privacy settings."), who);
-    purple_debug_info("yggdrasilprpl",
+    purple_debug_info(PLUGIN_DEBUG_NAME,
                       "discarding; %s is blocked by %s's privacy settings\n",
                       from_username, who);
     purple_conv_present_error(who, gc->account, msg);
@@ -439,7 +440,7 @@ static int yggdrasilprpl_send_im(PurpleConnection *gc, const char *who,
     GOfflineMessage *offline_message;
     GList *messages;
 
-    purple_debug_info("yggdrasilprpl",
+    purple_debug_info(PLUGIN_DEBUG_NAME,
                       "%s is offline, sending as offline message\n", who);
     offline_message = g_new0(GOfflineMessage, 1);
     offline_message->from = g_strdup(from_username);
@@ -456,7 +457,7 @@ static int yggdrasilprpl_send_im(PurpleConnection *gc, const char *who,
 }
 
 static void yggdrasilprpl_set_info(PurpleConnection *gc, const char *info) {
-  purple_debug_info("yggdrasilprpl", "setting %s's user info to %s\n",
+  purple_debug_info(PLUGIN_DEBUG_NAME, "setting %s's user info to %s\n",
                     gc->account->username, info);
 }
 
@@ -473,7 +474,7 @@ static void notify_typing(PurpleConnection *from, PurpleConnection *to,
                           gpointer typing) {
   const char *from_username = from->account->username;
   const char *action = typing_state_to_string((PurpleTypingState)typing);
-  purple_debug_info("yggdrasilprpl", "notifying %s that %s %s\n",
+  purple_debug_info(PLUGIN_DEBUG_NAME, "notifying %s that %s %s\n",
                     to->account->username, from_username, action);
 
   serv_got_typing(to,
@@ -485,7 +486,7 @@ static void notify_typing(PurpleConnection *from, PurpleConnection *to,
 
 static unsigned int yggdrasilprpl_send_typing(PurpleConnection *gc, const char *name,
                                          PurpleTypingState typing) {
-  purple_debug_info("yggdrasilprpl", "%s %s\n", gc->account->username,
+  purple_debug_info(PLUGIN_DEBUG_NAME, "%s %s\n", gc->account->username,
                     typing_state_to_string(typing));
   foreach_yggdrasilprpl_gc(notify_typing, gc, (gpointer)typing);
   return 0;
@@ -496,7 +497,7 @@ static void yggdrasilprpl_get_info(PurpleConnection *gc, const char *username) {
   PurpleNotifyUserInfo *info = purple_notify_user_info_new();
   PurpleAccount *acct;
 
-  purple_debug_info("yggdrasilprpl", "Fetching %s's user info for %s\n", username,
+  purple_debug_info(PLUGIN_DEBUG_NAME, "Fetching %s's user info for %s\n", username,
                     gc->account->username);
 
   if (!get_yggdrasilprpl_gc(username)) {
@@ -522,7 +523,7 @@ static void yggdrasilprpl_get_info(PurpleConnection *gc, const char *username) {
 
 static void yggdrasilprpl_set_status(PurpleAccount *acct, PurpleStatus *status) {
   const char *msg = purple_status_get_attr_string(status, "message");
-  purple_debug_info("yggdrasilprpl", "setting %s's status to %s: %s\n",
+  purple_debug_info(PLUGIN_DEBUG_NAME, "setting %s's status to %s: %s\n",
                     acct->username, purple_status_get_name(status), msg);
 
   foreach_yggdrasilprpl_gc(report_status_change, get_yggdrasilprpl_gc(acct->username),
@@ -530,14 +531,14 @@ static void yggdrasilprpl_set_status(PurpleAccount *acct, PurpleStatus *status) 
 }
 
 static void yggdrasilprpl_set_idle(PurpleConnection *gc, int idletime) {
-  purple_debug_info("yggdrasilprpl",
+  purple_debug_info(PLUGIN_DEBUG_NAME,
                     "purple reports that %s has been idle for %d seconds\n",
                     gc->account->username, idletime);
 }
 
 static void yggdrasilprpl_change_passwd(PurpleConnection *gc, const char *old_pass,
                                    const char *new_pass) {
-  purple_debug_info("yggdrasilprpl", "%s wants to change their password\n",
+  purple_debug_info(PLUGIN_DEBUG_NAME, "%s wants to change their password\n",
                     gc->account->username);
 }
 
@@ -547,7 +548,7 @@ static void yggdrasilprpl_add_buddy(PurpleConnection *gc, PurpleBuddy *buddy,
   const char *username = gc->account->username;
   PurpleConnection *buddy_gc = get_yggdrasilprpl_gc(buddy->name);
 
-  purple_debug_info("yggdrasilprpl", "adding %s to %s's buddy list\n", buddy->name,
+  purple_debug_info(PLUGIN_DEBUG_NAME, "adding %s to %s's buddy list\n", buddy->name,
                     username);
 
   if (buddy_gc) {
@@ -556,10 +557,10 @@ static void yggdrasilprpl_add_buddy(PurpleConnection *gc, PurpleBuddy *buddy,
     discover_status(gc, buddy_gc, NULL);
 
     if (purple_find_buddy(buddy_acct, username)) {
-      purple_debug_info("yggdrasilprpl", "%s is already on %s's buddy list\n",
+      purple_debug_info(PLUGIN_DEBUG_NAME, "%s is already on %s's buddy list\n",
                         username, buddy->name);
     } else {
-      purple_debug_info("yggdrasilprpl", "asking %s if they want to add %s\n",
+      purple_debug_info(PLUGIN_DEBUG_NAME, "asking %s if they want to add %s\n",
                         buddy->name, username);
       purple_account_request_add(buddy_acct,
                                  username,
@@ -575,7 +576,7 @@ static void yggdrasilprpl_add_buddies(PurpleConnection *gc, GList *buddies,
   GList *buddy = buddies;
   GList *group = groups;
 
-  purple_debug_info("yggdrasilprpl", "adding multiple buddies\n");
+  purple_debug_info(PLUGIN_DEBUG_NAME, "adding multiple buddies\n");
 
   while (buddy && group) {
     yggdrasilprpl_add_buddy(gc, (PurpleBuddy *)buddy->data, (PurpleGroup *)group->data);
@@ -587,7 +588,7 @@ static void yggdrasilprpl_add_buddies(PurpleConnection *gc, GList *buddies,
 static void yggdrasilprpl_remove_buddy(PurpleConnection *gc, PurpleBuddy *buddy,
                                   PurpleGroup *group)
 {
-  purple_debug_info("yggdrasilprpl", "removing %s from %s's buddy list\n",
+  purple_debug_info(PLUGIN_DEBUG_NAME, "removing %s from %s's buddy list\n",
                     buddy->name, gc->account->username);
 }
 
@@ -596,7 +597,7 @@ static void yggdrasilprpl_remove_buddies(PurpleConnection *gc, GList *buddies,
   GList *buddy = buddies;
   GList *group = groups;
 
-  purple_debug_info("yggdrasilprpl", "removing multiple buddies\n");
+  purple_debug_info(PLUGIN_DEBUG_NAME, "removing multiple buddies\n");
 
   while (buddy && group) {
     yggdrasilprpl_remove_buddy(gc, (PurpleBuddy *)buddy->data,
@@ -613,22 +614,22 @@ static void yggdrasilprpl_remove_buddies(PurpleConnection *gc, GList *buddies,
  * allowed or blocked.
  */
 static void yggdrasilprpl_add_permit(PurpleConnection *gc, const char *name) {
-  purple_debug_info("yggdrasilprpl", "%s adds %s to their allowed list\n",
+  purple_debug_info(PLUGIN_DEBUG_NAME, "%s adds %s to their allowed list\n",
                     gc->account->username, name);
 }
 
 static void yggdrasilprpl_add_deny(PurpleConnection *gc, const char *name) {
-  purple_debug_info("yggdrasilprpl", "%s adds %s to their blocked list\n",
+  purple_debug_info(PLUGIN_DEBUG_NAME, "%s adds %s to their blocked list\n",
                     gc->account->username, name);
 }
 
 static void yggdrasilprpl_rem_permit(PurpleConnection *gc, const char *name) {
-  purple_debug_info("yggdrasilprpl", "%s removes %s from their allowed list\n",
+  purple_debug_info(PLUGIN_DEBUG_NAME, "%s removes %s from their allowed list\n",
                     gc->account->username, name);
 }
 
 static void yggdrasilprpl_rem_deny(PurpleConnection *gc, const char *name) {
-  purple_debug_info("yggdrasilprpl", "%s removes %s from their blocked list\n",
+  purple_debug_info(PLUGIN_DEBUG_NAME, "%s removes %s from their blocked list\n",
                     gc->account->username, name);
 }
 
@@ -641,7 +642,7 @@ static void yggdrasilprpl_set_permit_deny(PurpleConnection *gc) {
 static void joined_chat(PurpleConvChat *from, PurpleConvChat *to,
                         int id, const char *room, gpointer userdata) {
   /*  tell their chat window that we joined */
-  purple_debug_info("yggdrasilprpl", "%s sees that %s joined chat room %s\n",
+  purple_debug_info(PLUGIN_DEBUG_NAME, "%s sees that %s joined chat room %s\n",
                     to->nick, from->nick, room);
   purple_conv_chat_add_user(to,
                             from->nick,
@@ -651,7 +652,7 @@ static void joined_chat(PurpleConvChat *from, PurpleConvChat *to,
 
   if (from != to) {
     /* add them to our chat window */
-    purple_debug_info("yggdrasilprpl", "%s sees that %s is in chat room %s\n",
+    purple_debug_info(PLUGIN_DEBUG_NAME, "%s sees that %s is in chat room %s\n",
                       from->nick, to->nick, room);
     purple_conv_chat_add_user(from,
                               to->nick,
@@ -665,7 +666,7 @@ static void yggdrasilprpl_join_chat(PurpleConnection *gc, GHashTable *components
   const char *username = gc->account->username;
   const char *room = g_hash_table_lookup(components, "room");
   int chat_id = g_str_hash(room);
-  purple_debug_info("yggdrasilprpl", "%s is joining chat room %s\n", username, room);
+  purple_debug_info(PLUGIN_DEBUG_NAME, "%s is joining chat room %s\n", username, room);
 
   if (!purple_find_chat(gc, chat_id)) {
     serv_got_joined_chat(gc, chat_id, room);
@@ -676,7 +677,7 @@ static void yggdrasilprpl_join_chat(PurpleConnection *gc, GHashTable *components
     char *tmp = g_strdup_printf(_("%s is already in chat room %s."),
                                 username,
                                 room);
-    purple_debug_info("yggdrasilprpl", "%s is already in chat room %s\n", username,
+    purple_debug_info(PLUGIN_DEBUG_NAME, "%s is already in chat room %s\n", username,
                       room);
     purple_notify_info(gc, _("Join chat"), _("Join chat"), tmp);
     g_free(tmp);
@@ -694,7 +695,7 @@ static void yggdrasilprpl_reject_chat(PurpleConnection *gc, GHashTable *componen
     _("has rejected your invitation to join the chat room"),
     room);
 
-  purple_debug_info("yggdrasilprpl",
+  purple_debug_info(PLUGIN_DEBUG_NAME,
                     "%s has rejected %s's invitation to join chat room %s\n",
                     username, invited_by, room);
 
@@ -707,7 +708,7 @@ static void yggdrasilprpl_reject_chat(PurpleConnection *gc, GHashTable *componen
 
 static char *yggdrasilprpl_get_chat_name(GHashTable *components) {
   const char *room = g_hash_table_lookup(components, "room");
-  purple_debug_info("yggdrasilprpl", "reporting chat room name '%s'\n", room);
+  purple_debug_info(PLUGIN_DEBUG_NAME, "reporting chat room name '%s'\n", room);
   return g_strdup(room);
 }
 
@@ -718,14 +719,14 @@ static void yggdrasilprpl_chat_invite(PurpleConnection *gc, int id,
   const char *room = conv->name;
   PurpleAccount *to_acct = purple_accounts_find(who, NULLPRPL_ID);
 
-  purple_debug_info("yggdrasilprpl", "%s is inviting %s to join chat room %s\n",
+  purple_debug_info(PLUGIN_DEBUG_NAME, "%s is inviting %s to join chat room %s\n",
                     username, who, room);
 
   if (to_acct) {
     PurpleConversation *to_conv = purple_find_chat(to_acct->gc, id);
     if (to_conv) {
       char *tmp = g_strdup_printf("%s is already in chat room %s.", who, room);
-      purple_debug_info("yggdrasilprpl",
+      purple_debug_info(PLUGIN_DEBUG_NAME,
                         "%s is already in chat room %s; "
                         "ignoring invitation from %s\n",
                         who, room, username);
@@ -745,7 +746,7 @@ static void left_chat_room(PurpleConvChat *from, PurpleConvChat *to,
                            int id, const char *room, gpointer userdata) {
   if (from != to) {
     /*  tell their chat window that we left */
-    purple_debug_info("yggdrasilprpl", "%s sees that %s left chat room %s\n",
+    purple_debug_info(PLUGIN_DEBUG_NAME, "%s sees that %s left chat room %s\n",
                       to->nick, from->nick, room);
     purple_conv_chat_remove_user(to,
                                  from->nick,
@@ -755,7 +756,7 @@ static void left_chat_room(PurpleConvChat *from, PurpleConvChat *to,
 
 static void yggdrasilprpl_chat_leave(PurpleConnection *gc, int id) {
   PurpleConversation *conv = purple_find_chat(gc, id);
-  purple_debug_info("yggdrasilprpl", "%s is leaving chat room %s\n",
+  purple_debug_info(PLUGIN_DEBUG_NAME, "%s is leaving chat room %s\n",
                     gc->account->username, conv->name);
 
   /* tell everyone that we left */
@@ -784,7 +785,7 @@ static PurpleCmdRet send_whisper(PurpleConversation *conv, const gchar *cmd,
   }
 
   from_username = conv->account->username;
-  purple_debug_info("yggdrasilprpl", "%s whispers to %s in chat room %s: %s\n",
+  purple_debug_info(PLUGIN_DEBUG_NAME, "%s whispers to %s in chat room %s: %s\n",
                     from_username, to_username, conv->name, message);
 
   chat = purple_conversation_get_chat_data(conv);
@@ -817,7 +818,7 @@ static void yggdrasilprpl_chat_whisper(PurpleConnection *gc, int id, const char 
                                   const char *message) {
   const char *username = gc->account->username;
   PurpleConversation *conv = purple_find_chat(gc, id);
-  purple_debug_info("yggdrasilprpl",
+  purple_debug_info(PLUGIN_DEBUG_NAME,
                     "%s receives whisper from %s in chat room %s: %s\n",
                     username, who, conv->name, message);
 
@@ -831,7 +832,7 @@ static void receive_chat_message(PurpleConvChat *from, PurpleConvChat *to,
   const char *message = (const char *)userdata;
   PurpleConnection *to_gc = get_yggdrasilprpl_gc(to->nick);
 
-  purple_debug_info("yggdrasilprpl",
+  purple_debug_info(PLUGIN_DEBUG_NAME,
                     "%s receives message from %s in chat room %s: %s\n",
                     to->nick, from->nick, room, message);
   serv_got_chat_in(to_gc, id, from->nick, PURPLE_MESSAGE_RECV, message,
@@ -844,7 +845,7 @@ static int yggdrasilprpl_chat_send(PurpleConnection *gc, int id, const char *mes
   PurpleConversation *conv = purple_find_chat(gc, id);
 
   if (conv) {
-    purple_debug_info("yggdrasilprpl",
+    purple_debug_info(PLUGIN_DEBUG_NAME,
                       "%s is sending message to chat room %s: %s\n", username,
                       conv->name, message);
 
@@ -852,7 +853,7 @@ static int yggdrasilprpl_chat_send(PurpleConnection *gc, int id, const char *mes
     foreach_gc_in_chat(receive_chat_message, gc, id, (gpointer)message);
     return 0;
   } else {
-    purple_debug_info("yggdrasilprpl",
+    purple_debug_info(PLUGIN_DEBUG_NAME,
                       "tried to send message from %s to chat room #%d: %s\n"
                       "but couldn't find chat room",
                       username, id, message);
@@ -861,13 +862,13 @@ static int yggdrasilprpl_chat_send(PurpleConnection *gc, int id, const char *mes
 }
 
 static void yggdrasilprpl_register_user(PurpleAccount *acct) {
- purple_debug_info("yggdrasilprpl", "registering account for %s\n",
+ purple_debug_info(PLUGIN_DEBUG_NAME, "registering account for %s\n",
                    acct->username);
 }
 
 static void yggdrasilprpl_get_cb_info(PurpleConnection *gc, int id, const char *who) {
   PurpleConversation *conv = purple_find_chat(gc, id);
-  purple_debug_info("yggdrasilprpl",
+  purple_debug_info(PLUGIN_DEBUG_NAME,
                     "retrieving %s's info for %s in chat room %s\n", who,
                     gc->account->username, conv->name);
 
@@ -876,25 +877,25 @@ static void yggdrasilprpl_get_cb_info(PurpleConnection *gc, int id, const char *
 
 static void yggdrasilprpl_alias_buddy(PurpleConnection *gc, const char *who,
                                  const char *alias) {
- purple_debug_info("yggdrasilprpl", "%s sets %s's alias to %s\n",
+ purple_debug_info(PLUGIN_DEBUG_NAME, "%s sets %s's alias to %s\n",
                    gc->account->username, who, alias);
 }
 
 static void yggdrasilprpl_group_buddy(PurpleConnection *gc, const char *who,
                                  const char *old_group,
                                  const char *new_group) {
-  purple_debug_info("yggdrasilprpl", "%s has moved %s from group %s to group %s\n",
+  purple_debug_info(PLUGIN_DEBUG_NAME, "%s has moved %s from group %s to group %s\n",
                     gc->account->username, who, old_group, new_group);
 }
 
 static void yggdrasilprpl_rename_group(PurpleConnection *gc, const char *old_name,
                                   PurpleGroup *group, GList *moved_buddies) {
-  purple_debug_info("yggdrasilprpl", "%s has renamed group %s to %s\n",
+  purple_debug_info(PLUGIN_DEBUG_NAME, "%s has renamed group %s to %s\n",
                     gc->account->username, old_name, group->name);
 }
 
 static void yggdrasilprpl_convo_closed(PurpleConnection *gc, const char *who) {
-  purple_debug_info("yggdrasilprpl", "%s's conversation with %s was closed\n",
+  purple_debug_info(PLUGIN_DEBUG_NAME, "%s's conversation with %s was closed\n",
                     gc->account->username, who);
 }
 
@@ -908,13 +909,13 @@ static const char *yggdrasilprpl_normalize(const PurpleAccount *acct,
 
 static void yggdrasilprpl_set_buddy_icon(PurpleConnection *gc,
                                     PurpleStoredImage *img) {
- purple_debug_info("yggdrasilprpl", "setting %s's buddy icon to %s\n",
+ purple_debug_info(PLUGIN_DEBUG_NAME, "setting %s's buddy icon to %s\n",
                    gc->account->username,
                    img ? purple_imgstore_get_filename(img) : "(yggdrasil)");
 }
 
 static void yggdrasilprpl_remove_group(PurpleConnection *gc, PurpleGroup *group) {
-  purple_debug_info("yggdrasilprpl", "%s has removed group %s\n",
+  purple_debug_info(PLUGIN_DEBUG_NAME, "%s has removed group %s\n",
                     gc->account->username, group->name);
 }
 
@@ -947,7 +948,7 @@ static void yggdrasilprpl_set_chat_topic(PurpleConnection *gc, int id,
   if (!chat)
     return;
 
-  purple_debug_info("yggdrasilprpl", "%s sets topic of chat room '%s' to '%s'\n",
+  purple_debug_info(PLUGIN_DEBUG_NAME, "%s sets topic of chat room '%s' to '%s'\n",
                     gc->account->username, conv->name, topic);
 
   last_topic = purple_conv_chat_get_topic(chat);
@@ -971,7 +972,7 @@ static PurpleRoomlist *yggdrasilprpl_roomlist_get_list(PurpleConnection *gc) {
   GList *chats;
   GList *seen_ids = NULL;
 
-  purple_debug_info("yggdrasilprpl", "%s asks for room list; returning:\n", username);
+  purple_debug_info(PLUGIN_DEBUG_NAME, "%s asks for room list; returning:\n", username);
 
   /* set up the room list */
   field = purple_roomlist_field_new(PURPLE_ROOMLIST_FIELD_STRING, "room",
@@ -999,7 +1000,7 @@ static PurpleRoomlist *yggdrasilprpl_roomlist_get_list(PurpleConnection *gc) {
      * of this function and none of the conversations are being deleted
      * in that timespan. */
     seen_ids = g_list_prepend(seen_ids, (char *)name); /* no, it's new. */
-    purple_debug_info("yggdrasilprpl", "%s (%d), ", name, id);
+    purple_debug_info(PLUGIN_DEBUG_NAME, "%s (%d), ", name, id);
 
     room = purple_roomlist_room_new(PURPLE_ROOMLIST_ROOMTYPE_ROOM, name, NULL);
     purple_roomlist_room_add_field(roomlist, room, name);
@@ -1013,13 +1014,13 @@ static PurpleRoomlist *yggdrasilprpl_roomlist_get_list(PurpleConnection *gc) {
 }
 
 static void yggdrasilprpl_roomlist_cancel(PurpleRoomlist *list) {
- purple_debug_info("yggdrasilprpl", "%s asked to cancel room list request\n",
+ purple_debug_info(PLUGIN_DEBUG_NAME, "%s asked to cancel room list request\n",
                    list->account->username);
 }
 
 static void yggdrasilprpl_roomlist_expand_category(PurpleRoomlist *list,
                                               PurpleRoomlistRoom *category) {
- purple_debug_info("yggdrasilprpl", "%s asked to expand room list category %s\n",
+ purple_debug_info(PLUGIN_DEBUG_NAME, "%s asked to expand room list category %s\n",
                    list->account->username, category->name);
 }
 
@@ -1030,7 +1031,7 @@ static gboolean yggdrasilprpl_can_receive_file(PurpleConnection *gc,
 }
 
 static gboolean yggdrasilprpl_offline_message(const PurpleBuddy *buddy) {
-  purple_debug_info("yggdrasilprpl",
+  purple_debug_info(PLUGIN_DEBUG_NAME,
                     "reporting that offline messages are supported for %s\n",
                     buddy->name);
   return TRUE;
@@ -1139,7 +1140,7 @@ static void yggdrasilprpl_init(PurplePlugin *plugin)
     "example",                /* pref name */
     "default");               /* default value */
 
-  purple_debug_info("yggdrasilprpl", "starting up\n");
+  purple_debug_info(PLUGIN_DEBUG_NAME, "starting up\n");
 
   prpl_info.user_splits = g_list_append(NULL, split);
   prpl_info.protocol_options = g_list_append(NULL, option);
@@ -1164,7 +1165,7 @@ static void yggdrasilprpl_init(PurplePlugin *plugin)
 }
 
 static void yggdrasilprpl_destroy(PurplePlugin *plugin) {
-  purple_debug_info("yggdrasilprpl", "shutting down\n");
+  purple_debug_info(PLUGIN_DEBUG_NAME, "shutting down\n");
 }
 
 
