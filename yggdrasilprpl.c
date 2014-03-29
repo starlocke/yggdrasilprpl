@@ -74,6 +74,7 @@ static PurplePlugin *_yggdrasil_protocol = NULL;
 #define YGGDRASIL_STATUS_ONLINE   "online"
 #define YGGDRASIL_STATUS_AWAY     "away"
 #define YGGDRASIL_STATUS_OFFLINE  "offline"
+#define YGGDRASIL_NETWORK         "yggdrasilradio.net"
 #define PLUGIN_DEBUG_NAME    "yggdrasilprpl"
 
 typedef void (*GcFunc)(PurpleConnection *from,
@@ -1044,7 +1045,7 @@ static gboolean yggdrasilprpl_offline_message(const PurpleBuddy *buddy) {
 
 static PurplePluginProtocolInfo prpl_info =
 {
-  OPT_PROTO_NO_PASSWORD | OPT_PROTO_CHAT_TOPIC,  /* options */
+  OPT_PROTO_CHAT_TOPIC,  /* options */
   NULL,               /* user_splits, initialized in yggdrasilprpl_init() */
   NULL,               /* protocol_options, initialized in yggdrasilprpl_init() */
   {   /* icon_spec, a PurpleBuddyIconSpec */
@@ -1131,10 +1132,6 @@ static PurplePluginProtocolInfo prpl_info =
 static void yggdrasilprpl_init(PurplePlugin *plugin)
 {
   /* see accountopt.h for information about user splits and protocol options */
-  PurpleAccountUserSplit *split = purple_account_user_split_new(
-    _("Example user split"),  /* text shown to user */
-    "default",                /* default value */
-    '@');                     /* field separator */
   PurpleAccountOption *option = purple_account_option_string_new(
     _("Example option"),      /* text shown to user */
     "example",                /* pref name */
@@ -1142,7 +1139,6 @@ static void yggdrasilprpl_init(PurplePlugin *plugin)
 
   purple_debug_info(PLUGIN_DEBUG_NAME, "starting up\n");
 
-  prpl_info.user_splits = g_list_append(NULL, split);
   prpl_info.protocol_options = g_list_append(NULL, option);
 
   /* register whisper chat command, /msg */
@@ -1179,8 +1175,8 @@ static PurplePluginInfo info =
   0,                                                       /* flags */
   NULL,                                                    /* dependencies */
   PURPLE_PRIORITY_DEFAULT,                                 /* priority */
-  YGGDRASILPRPL_ID,                                             /* id */
-  "yggdrasilprpl - Yggdrasil Radio Chat Protocol Plugin",  /* name */
+  YGGDRASILPRPL_ID,                                        /* id */
+  "YggdrasilRadio Chat",                                  /* name */
   DISPLAY_VERSION,                                         /* version */
   N_("Yggdrasil Radio Chat"),                              /* summary */
   N_("Yggdrasil Radio Chat"),                              /* description */
@@ -1188,11 +1184,11 @@ static PurplePluginInfo info =
   "http://www.cul-de-sac.ca/",                             /* homepage */
   NULL,                                                    /* load */
   NULL,                                                    /* unload */
-  yggdrasilprpl_destroy,                                        /* destroy */
+  yggdrasilprpl_destroy,                                    /* destroy */
   NULL,                                                    /* ui_info */
   &prpl_info,                                              /* extra_info */
   NULL,                                                    /* prefs_info */
-  yggdrasilprpl_actions,                                        /* actions */
+  yggdrasilprpl_actions,                                    /* actions */
   NULL,                                                    /* padding... */
   NULL,
   NULL,
