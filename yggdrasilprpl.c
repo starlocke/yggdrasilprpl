@@ -1386,12 +1386,12 @@ static PurplePluginInfo info =
   NULL,                                                    /* dependencies */
   PURPLE_PRIORITY_DEFAULT,                                 /* priority */
   YGGDRASILPRPL_ID,                                        /* id */
-  "YggdrasilRadio Chat",                                  /* name */
+  "Yggdrasil Intercom",                                    /* name */
   DISPLAY_VERSION,                                         /* version */
-  N_("Yggdrasil Radio Chat"),                              /* summary */
-  N_("Yggdrasil Radio Chat"),                              /* description */
+  N_("Yggdrasil Intercom"),                                /* summary */
+  N_("Yggdrasil Intercom"),                                /* description */
   "Victor Yap <victor.yap@alumni.concordia.ca>",           /* author */
-  "http://www.cul-de-sac.ca/",                             /* homepage */
+  "https://github.com/starlocke/yggdrasilprpl",            /* homepage */
   NULL,                                                    /* load */
   NULL,                                                    /* unload */
   yggdrasilprpl_destroy,                                    /* destroy */
