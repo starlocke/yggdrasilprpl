@@ -3,29 +3,35 @@ yggdrasilprpl
 --------
 OVERVIEW
 --------
-Yggdrasilprpl is a mock protocol plugin for Pidgin and libpurple. You can create
-accounts with it, sign on and off, add buddies, and send and receive IMs, all
-without connecting to a server!
+Yggdrasilprpl is a protocol plugin for Pidgin and libpurple. You can create
+exactly one account to interface with YggdrasilRadio's webservices.
 
-Beyond that basic functionality, yggdrasilprpl supports presence and away/available
-messages, offline messages, user info, typing notification, privacy
-allow/block lists, chat rooms, whispering, room lists, and protocol icons and
-emblems. Notable missing features are file transfer and account registration
-and authentication.
+The only feature currently supported is intercom/chat.
 
-Yggdrasilprpl is intended as an example of how to write a libpurple protocol
-plugin. It doesn't contain networking code or an event loop, but it does
-demonstrate how to use the libpurple API to do pretty much everything a prpl
-might need to do.
+FIXME: Paths are currently hardcoded for linux-like operating systems.
 
-Yggdrasilprpl is also a useful tool for hacking on Pidgin, Finch, and other
-libpurple clients. It's a full-featured protocol plugin, but doesn't depend on
-an external server, so it's a quick and easy way to exercise test new code. It
-also allows you to work while you're disconnected.
+FIXME: Windows not supported (hardcoded paths).
+
+FIXME: Mac OS not supported (its version of "sed" is too stupid for \n).
+
+TODO: I have no idea how to create "Makefiles". I compiled this by hacking
+      the upstream makefile mechanisms, adding "yggdrasil" into the list of
+      supported protocols, then running ./configure
+
+TODO: "user info" would be nice.
+
+TODO: Be more intelligent about log files.
+
+Yggdrasilprpl is based off the excellent "null protocol" skeleton found in
+the original pidgin/libpurple source tree.
 
 -----------------------
 BUILDING AND INSTALLING
 -----------------------
+
+NOTE: Dirty hacking of "upstream" was how I originally managed to use ./configure
+      to create the "Makefile" needed for an easy build.  I have no idea how
+      independent Makefiles are supposed to be written.
 
 To build, just run ./configure as usual in the root directory of the pidgin
 source distribution. Then cd libpurple/protocols/yggdrasil and then make.  To
@@ -33,12 +39,27 @@ install, run make install.  Then run Pidgin.
 
 To build yggdrasilprpl on Windows (with Cygwin/MinGW), use: make -f Makefile.mingw
 
+The protocol icons (under the folders: 16, 22, and 48) can be copied to your
+pidgin's standard location for such resources. Try:
+
+  Linux (Ubuntu) - /usr/share/pixmaps/pidgin/protocols
+
 -----
 USAGE
 -----
 To add a yggdrasilprpl account, go to the account editor window and click Add.
-Select Yggdrasilprpl from the protocol drop-down list, and enter any username you
-want.
+Select Yggdrasilprpl from the protocol drop-down list, and enter any your
+existing username and password from YggdrasilRadio.
 
-Now, use Pidgin like normal. You can add buddies, send IMs, set away messages,
-etc. If you send IMs to your own username, they will be echoed back to you.
+Upon launching, assuming you have a Yggdrasil account setup, Pidgin will
+login to YggdrasilRadio, and create a "Yggdrasil Intercom" chatroom, adding it
+to your "Buddy List" under the default group "Chats".
+
+Now, use Pidgin like normal for (a) reading the intercom chat (b) sending
+messages to the intercom chat (c) send "/undo" to undo a message on the
+official servers [this plugin does not make any attempt at real-time undos,
+so anything said is permanent until restart].
+
+Need your chat window to blink? Use the "Message Notification" plugin:
+
+  https://developer.pidgin.im/ticket/12672

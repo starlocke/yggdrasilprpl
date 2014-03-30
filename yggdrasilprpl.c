@@ -2,28 +2,24 @@
  * purple
  *
  * Purple is the legal property of its developers, whose names are too numerous
- * to list here.  Please refer to the COPYRIGHT file distributed with this
+ * to list here.  Please refer to the COPYRIGHT file distributed with its
  * source distribution.
  *
- * Yggdrasilprpl is a mock protocol plugin for Pidgin and libpurple. You can create
- * accounts with it, sign on and off, add buddies, and send and receive IMs,
- * all without connecting to a server!
+ * -----------------------------------------------------------------------------
  *
- * Beyond that basic functionality, yggdrasilprpl supports presence and
- * away/available messages, offline messages, user info, typing notification,
- * privacy allow/block lists, chat rooms, whispering, room lists, and protocol
- * icons and emblems. Notable missing features are file transfer and account
- * registration and authentication.
+ * Yggdrasilprpl is a protocol plugin for Pidgin and libpurple. You can create
+ * exactly one account to interface with YggdrasilRadio's webservices.
  *
- * Yggdrasilprpl is intended as an example of how to write a libpurple protocol
- * plugin. It doesn't contain networking code or an event loop, but it does
- * demonstrate how to use the libpurple API to do pretty much everything a prpl
- * might need to do.
+ * The only feature currently supported is intercom/chat.
  *
- * Yggdrasilprpl is also a useful tool for hacking on Pidgin, Finch, and other
- * libpurple clients. It's a full-featured protocol plugin, but doesn't depend
- * on an external server, so it's a quick and easy way to exercise test new
- * code. It also allows you to work while you're disconnected.
+ * FIXME: Paths are currently hardcoded for linux-like operating systems.
+ *
+ * TODO: I have no idea how to create "Makefiles". I compiled this by hacking
+ *       the upstream makefile mechanisms, adding "yggdrasil" into the list of
+ *       supported protocols, then running ./configure
+ *
+ * Yggdrasilprpl is based off the excellent "null protocol" skeleton found in
+ * the original pidgin/libpurple source tree.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -41,9 +37,14 @@
  */
 
 #include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+
 #include <string.h>
 #include <time.h>
+#include <signal.h>
 
+#include <curl/curl.h>
 #include <glib.h>
 
 /* If you're using this as the basis of a prpl that will be distributed
@@ -76,6 +77,19 @@ static PurplePlugin *_yggdrasil_protocol = NULL;
 #define YGGDRASIL_STATUS_OFFLINE  "offline"
 #define YGGDRASIL_NETWORK         "yggdrasilradio.net"
 #define PLUGIN_DEBUG_NAME    "yggdrasilprpl"
+#define YGGDRASIL_DATA_AUTH  "/tmp/yggdrasil.auth.txt"
+#define YGGDRASIL_DATA_CHAT_LOG  "/tmp/yggdrasil.chat.log.txt"
+#define YGGDRASIL_DATA_CHAT_NEW  "/tmp/yggdrasil.chat.new.txt"
+#define YGGDRASIL_DATA_CHAT_TMP  "/tmp/yggdrasil.chat.tmp.txt"
+#define YGGDRASIL_DATA_TOPIC  "/tmp/yggdrasil.topic.txt"
+#define YGGDRASIL_DATA_USERS  "/tmp/yggdrasil.users.txt"
+
+#define YGGDRASIL_REFRESH_CHAT_INTERVAL   10
+
+#define CURL_MAX_BUF	65536
+
+char wr_buf[CURL_MAX_BUF+1];
+int  wr_index;
 
 typedef void (*GcFunc)(PurpleConnection *from,
                        PurpleConnection *to,
@@ -86,6 +100,14 @@ typedef struct {
   PurpleConnection *from;
   gpointer userdata;
 } GcFuncData;
+
+char from_hex(char ch);
+char to_hex(char code);
+char *url_encode(const char *str);
+
+char AUTH_CHAT[80];
+char AUTH_SEARCH[80];
+char AUTH_SEARCH_SUBDOMAIN[80];
 
 /*
  * stores offline messages that haven't been delivered yet. maps username
@@ -154,11 +176,26 @@ static void foreach_gc_in_chat(ChatFunc fn, PurpleConnection *from,
   ChatFuncData cfdata = { fn,
                           purple_conversation_get_chat_data(conv),
                           userdata };
-
   g_list_foreach(purple_connections_get_all(), call_chat_func,
                  &cfdata);
 }
 
+static PurpleConversation *current_conv;
+static PurpleConvChat *current_chat;
+static void yggdrasilprpl_chat_update_convo(PurpleConvChat *chat);
+static void yggdrasilprpl_chat_update_topic(PurpleConvChat *chat);
+static void yggdrasilprpl_chat_update_users(PurpleConvChat *chat, const char *account_username);
+static void chatread();
+
+static void refresh(int signal_code){
+  signal(SIGALRM, SIG_IGN);
+  chatread();
+  yggdrasilprpl_chat_update_topic(current_chat);
+  yggdrasilprpl_chat_update_users(current_chat, "");
+  yggdrasilprpl_chat_update_convo(current_chat);
+  signal(SIGALRM, refresh);
+  alarm(YGGDRASIL_REFRESH_CHAT_INTERVAL);
+}
 
 static void discover_status(PurpleConnection *from, PurpleConnection *to,
                             gpointer userdata) {
@@ -192,6 +229,16 @@ static void report_status_change(PurpleConnection *from, PurpleConnection *to,
   discover_status(to, from, NULL);
 }
 
+static void chatread(void);
+static void chatread(){
+  int ret;
+  ret = system("curl --silent http://yggdrasilradio.net/chatread.php?n=15 | head -n -1 | tail -n +2 | sed -e 's#<br>##g' -e 's#&nbsp;# #g' > /tmp/yggdrasil.chat.tmp.txt");
+  if(ret) printf("problem?");
+  ret = system("curl --silent http://yggdrasilradio.net/chatread.php?n=0 | cut -d '|' -f 2 > /tmp/yggdrasil.topic.txt");
+  if(ret) printf("problem?");
+  ret = system("curl --silent http://yggdrasilradio.net/chatread.php?n=0 | cut -d '|' -f 4 | sed -e 's#</span>, #</span>\\n#g' -e 's#</span><span#</span>\\n<span#g' | head -n -1 | sed 's#<span.*title=\"\\(.*\\)\">\\(.*\\)</span>#\\2 @ \\1#g' > /tmp/yggdrasil.users.txt");
+  if(ret) printf("problem?");
+}
 
 /*
  * UI callbacks
@@ -359,10 +406,67 @@ static GHashTable *yggdrasilprpl_chat_info_defaults(PurpleConnection *gc,
   return defaults;
 }
 
+static void yggdrasilprpl_chat_update_users(PurpleConvChat *chat, const char *account_username){
+  char user[80];
+  FILE *fp;
+  fp = fopen(YGGDRASIL_DATA_USERS, "rt");
+  purple_conv_chat_clear_users(chat);
+  while(fgets(user, 80, fp) != NULL){
+    user[strlen(user)-1] = 0;
+    if( strcmp(user, account_username) != 0 ){
+      purple_conv_chat_add_user(chat, user, "", PURPLE_CBFLAGS_NONE, FALSE);
+    }
+  }
+  fclose(fp);
+}
+
+static void yggdrasilprpl_chat_update_topic(PurpleConvChat *chat){
+  char topic[4096];
+  FILE *fp;
+  fp = fopen(YGGDRASIL_DATA_TOPIC, "rt");
+  if(fgets(topic, 4096, fp) != NULL){
+    topic[strlen(topic)-1] = 0;
+    purple_conv_chat_set_topic(chat, "system", topic);
+  }
+  fclose(fp);
+}
+
+static void yggdrasilprpl_chat_update_convo(PurpleConvChat *chat){
+  char message[4096];
+  int ret;
+  FILE *fp;
+
+  ret = system("diff /tmp/yggdrasil.chat.log.txt /tmp/yggdrasil.chat.tmp.txt | tail -n +2 | grep '^>' | sed 's/^> //g' > /tmp/yggdrasil.chat.new.txt");
+  fp = fopen(YGGDRASIL_DATA_CHAT_NEW, "rt");
+  while(fgets(message, 4096, fp) != NULL){
+    message[strlen(message)-1] = 0;
+    if(strlen(message) > 0){
+      purple_conv_chat_write(chat, "?", message, PURPLE_MESSAGE_RAW | PURPLE_MESSAGE_NO_LOG | PURPLE_MESSAGE_RECV, time(NULL));
+    }
+  }
+  fclose(fp);
+
+  ret = system("cat /tmp/yggdrasil.chat.new.txt >> /tmp/yggdrasil.chat.log.txt");
+  ret = system("tail -n 99 /tmp/yggdrasil.chat.log.txt > /tmp/yggdrasil.chat.tmp.txt");
+  ret = system("cat /tmp/yggdrasil.chat.tmp.txt > /tmp/yggdrasil.chat.log.txt");
+
+  if(ret) printf("problem?"); // I don't really care right now.
+}
+
 static void yggdrasilprpl_login(PurpleAccount *acct)
 {
   PurpleConnection *gc = purple_account_get_connection(acct);
   GList *offline_messages;
+  const char *password;
+  char *login_cmd;
+  char *escaped_username;
+  char *escaped_password;
+  int ret;
+  PurpleChat* pchat;
+  GHashTable *pchat_components;
+  char line[80];
+  FILE *fp;
+  int auth_line = 1;
 
   purple_debug_info(PLUGIN_DEBUG_NAME, "logging in %s\n", acct->username);
 
@@ -370,11 +474,52 @@ static void yggdrasilprpl_login(PurpleAccount *acct)
                                     0,   /* which connection step this is */
                                     2);  /* total number of steps */
 
+  ret = system("echo '' > /tmp/yggdrasil.auth.txt");
+  password = purple_account_get_password(acct);
+  escaped_username = url_encode(acct->username);
+  escaped_password = url_encode(password);
+  login_cmd = g_strdup_printf(
+    "curl --silent \"http://yggdrasilradio.net/login.php?uid=%s&pwd=%s\" | sed -e 's/$/\\n/' -e 's/|/\\n/g' > /tmp/yggdrasil.auth.txt"
+    , escaped_username
+    , escaped_password
+  );
+  ret = system(login_cmd);
+  if(ret) printf("problem?\n"); // I don't really care :P
+
+  fp = fopen(YGGDRASIL_DATA_AUTH, "rt");
+  while(fgets(line, 80, fp) != NULL){
+    line[strlen(line)-1] = 0;
+    if(strlen(line) > 0){
+      if(auth_line == 1){
+        strcpy( AUTH_CHAT, line );
+        auth_line = 2;
+      }
+      else if(auth_line == 2){
+        strcpy( AUTH_SEARCH, line );
+        auth_line = 3;
+      }
+      else if(auth_line == 3){
+        strcpy( AUTH_SEARCH_SUBDOMAIN, line );
+        auth_line = -1;
+      }
+    }
+  }
+  fclose(fp);
+
   purple_connection_update_progress(gc, _("Connected"),
                                     1,   /* which connection step this is */
                                     2);  /* total number of steps */
   purple_connection_set_state(gc, PURPLE_CONNECTED);
 
+  pchat = purple_blist_find_chat(acct, "Yggdrasil Intercom");
+  if(pchat != NULL){
+  }
+  else {
+    pchat_components = g_hash_table_new_full(g_str_hash, g_str_equal, NULL, g_free);
+    g_hash_table_replace(pchat_components, "room", "Yggdrasil Intercom");
+    pchat = purple_chat_new(acct, "", pchat_components);
+    purple_blist_add_chat(pchat, NULL, NULL);
+  }
   /* tell purple about everyone on our buddy list who's connected */
   foreach_yggdrasilprpl_gc(discover_status, gc, NULL);
 
@@ -483,6 +628,35 @@ static void notify_typing(PurpleConnection *from, PurpleConnection *to,
                   0, /* if non-zero, a timeout in seconds after which to
                       * reset the typing status to PURPLE_NOT_TYPING */
                   (PurpleTypingState)typing);
+}
+
+/* Converts a hex character to its integer value */
+char from_hex(char ch) {
+  return isdigit(ch) ? ch - '0' : tolower(ch) - 'a' + 10;
+}
+
+/* Converts an integer value to its hex character*/
+char to_hex(char code) {
+  static char hex[] = "0123456789abcdef";
+  return hex[code & 15];
+}
+
+/* Returns a url-encoded version of str */
+/* IMPORTANT: be sure to free() the returned string after use */
+char *url_encode(const char *str) {
+  const char *pstr = str;
+  char *buf = malloc(strlen(str) * 3 + 1), *pbuf = buf;
+  while (*pstr) {
+    if (isalnum(*pstr) || *pstr == '-' || *pstr == '_' || *pstr == '.' || *pstr == '~')
+      *pbuf++ = *pstr;
+    else if (*pstr == ' ')
+      *pbuf++ = '+';
+    else
+      *pbuf++ = '%', *pbuf++ = to_hex(*pstr >> 4), *pbuf++ = to_hex(*pstr & 15);
+    pstr++;
+  }
+  *pbuf = '\0';
+  return buf;
 }
 
 static unsigned int yggdrasilprpl_send_typing(PurpleConnection *gc, const char *name,
@@ -655,6 +829,7 @@ static void joined_chat(PurpleConvChat *from, PurpleConvChat *to,
     /* add them to our chat window */
     purple_debug_info(PLUGIN_DEBUG_NAME, "%s sees that %s is in chat room %s\n",
                       from->nick, to->nick, room);
+
     purple_conv_chat_add_user(from,
                               to->nick,
                               NULL,   /* user-provided join message, IRC style */
@@ -664,25 +839,37 @@ static void joined_chat(PurpleConvChat *from, PurpleConvChat *to,
 }
 
 static void yggdrasilprpl_join_chat(PurpleConnection *gc, GHashTable *components) {
+  PurpleConversation *conv;
+  PurpleConvChat* chat;
   const char *username = gc->account->username;
   const char *room = g_hash_table_lookup(components, "room");
   int chat_id = g_str_hash(room);
   purple_debug_info(PLUGIN_DEBUG_NAME, "%s is joining chat room %s\n", username, room);
 
-  if (!purple_find_chat(gc, chat_id)) {
+  conv = purple_find_chat(gc, chat_id);
+  if (!conv) {
     serv_got_joined_chat(gc, chat_id, room);
 
     /* tell everyone that we joined, and add them if they're already there */
     foreach_gc_in_chat(joined_chat, gc, chat_id, NULL);
+
+    conv = purple_find_chat(gc, chat_id);
   } else {
-    char *tmp = g_strdup_printf(_("%s is already in chat room %s."),
-                                username,
-                                room);
     purple_debug_info(PLUGIN_DEBUG_NAME, "%s is already in chat room %s\n", username,
                       room);
-    purple_notify_info(gc, _("Join chat"), _("Join chat"), tmp);
-    g_free(tmp);
   }
+  chatread(); // Update from website.
+
+  chat = purple_conversation_get_chat_data(conv);
+  yggdrasilprpl_chat_update_users(chat, username);
+  yggdrasilprpl_chat_update_topic(chat);
+  yggdrasilprpl_chat_update_convo(chat);
+
+  current_conv = conv;
+  current_chat = chat;
+  signal(SIGALRM, SIG_IGN);
+  signal(SIGALRM, refresh);
+  alarm(YGGDRASIL_REFRESH_CHAT_INTERVAL);
 }
 
 static void yggdrasilprpl_reject_chat(PurpleConnection *gc, GHashTable *components) {
@@ -842,16 +1029,36 @@ static void receive_chat_message(PurpleConvChat *from, PurpleConvChat *to,
 
 static int yggdrasilprpl_chat_send(PurpleConnection *gc, int id, const char *message,
                               PurpleMessageFlags flags) {
+  char *send_chat_cmd;
+  char *escaped_message;
   const char *username = gc->account->username;
   PurpleConversation *conv = purple_find_chat(gc, id);
+  PurpleConvChat *chat;
+  int ret_val;
 
   if (conv) {
     purple_debug_info(PLUGIN_DEBUG_NAME,
                       "%s is sending message to chat room %s: %s\n", username,
                       conv->name, message);
+    escaped_message = url_encode(message);
+    send_chat_cmd = g_strdup_printf(
+      "curl --silent \"http://yggdrasilradio.net/chatwrite.php?auth=%s&msg=%s\" | grep --silent 'OK'"
+      , AUTH_CHAT
+      , escaped_message
+    );
+    ret_val = system(send_chat_cmd);
+    if( ret_val ){
+      purple_notify_info(gc, _("Alert"), _("Alert"), _("chatwrite failed."));
+    }
+    g_free(send_chat_cmd);
 
     /* send message to everyone in the chat room */
     foreach_gc_in_chat(receive_chat_message, gc, id, (gpointer)message);
+
+    chatread();
+    chat = purple_conversation_get_chat_data(conv);
+    yggdrasilprpl_chat_update_convo(chat);
+    free(escaped_message);
     return 0;
   } else {
     purple_debug_info(PLUGIN_DEBUG_NAME,
@@ -1035,9 +1242,9 @@ static gboolean yggdrasilprpl_offline_message(const PurpleBuddy *buddy) {
   purple_debug_info(PLUGIN_DEBUG_NAME,
                     "reporting that offline messages are supported for %s\n",
                     buddy->name);
+
   return TRUE;
 }
-
 
 /*
  * prpl stuff. see prpl.h for more information.
@@ -1131,6 +1338,7 @@ static PurplePluginProtocolInfo prpl_info =
 
 static void yggdrasilprpl_init(PurplePlugin *plugin)
 {
+  int ret;
   /* see accountopt.h for information about user splits and protocol options */
   PurpleAccountOption *option = purple_account_option_string_new(
     _("Example option"),      /* text shown to user */
@@ -1157,6 +1365,8 @@ static void yggdrasilprpl_init(PurplePlugin *plugin)
                                             g_free,      /* key free fn */
                                             NULL);       /* value free fn */
 
+  ret = system("echo '' > /tmp/yggdrasil.chat.log.txt");
+  if(ret) printf("problem?");
   _yggdrasil_protocol = plugin;
 }
 
